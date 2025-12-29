@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Mic, MicOff, MessageSquare } from 'lucide-react';
+import { Mic, MessageSquare } from 'lucide-react';
 
 interface VoiceToggleProps {
   isEnabled: boolean;

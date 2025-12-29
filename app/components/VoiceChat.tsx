@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Volume2, Radio, Loader2 } from 'lucide-react';
+import { Mic, Volume2, Radio, Loader2 } from 'lucide-react';
 import { AudioRecorder, AudioPlayer } from '../lib/audioUtils';
 
 interface VoiceChatProps {
@@ -24,8 +24,10 @@ interface Transcript {
 
 export default function VoiceChat({
   sessionId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   analysisId,
   onTranscript,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onClose,
 }: VoiceChatProps) {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
@@ -89,6 +91,7 @@ export default function VoiceChat({
       setError('Failed to connect to voice service');
       setConnectionState('error');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
   // Handle server events

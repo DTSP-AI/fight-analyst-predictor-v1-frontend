@@ -22,6 +22,7 @@ export default function ChatPanel({ analysisId, pendingMessage, onMessageSent }:
   });
   const [input, setInput] = useState('');
   const [voiceMode, setVoiceMode] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [voiceConnected, setVoiceConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
