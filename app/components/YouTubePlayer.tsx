@@ -10,6 +10,23 @@ interface YouTubePlayerProps {
   onReady?: () => void;
 }
 
+// Suppress non-breaking YouTube iframe postMessage errors
+if (typeof window !== 'undefined') {
+  const originalConsoleError = console.error;
+  console.error = (...args) => {
+    const msg = args[0]?.toString() || '';
+    // Suppress YouTube postMessage and widget API errors (cosmetic, not breaking)
+    if (
+      msg.includes('postMessage') && msg.includes('youtube.com') ||
+      msg.includes('www-widgetapi') ||
+      msg.includes('Failed to execute') && msg.includes('DOMWindow')
+    ) {
+      return; // Silently ignore
+    }
+    originalConsoleError.apply(console, args);
+  };
+}
+
 // Extract video ID from various YouTube URL formats
 function extractVideoId(url: string): string | null {
   const patterns = [
