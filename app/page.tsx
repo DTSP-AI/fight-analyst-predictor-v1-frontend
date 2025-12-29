@@ -2,12 +2,10 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, ChevronDown, MessageSquare, Loader2, Clock, Swords } from 'lucide-react';
+import { User, ChevronDown, MessageSquare, Loader2, Clock, Swords, ArrowLeft, Download } from 'lucide-react';
 import YouTubeInput from './components/YouTubeInput';
 import YouTubePlayer from './components/YouTubePlayer';
 import ChatPanel from './components/ChatPanel';
-import HamburgerMenu from './components/HamburgerMenu';
-import Sidebar from './components/Sidebar';
 import { startAnalysis, pollAnalysisStatus, APIError } from './lib/apiClient';
 import type { AnalysisState, FighterInfo, TimestampedClip } from './lib/types';
 
@@ -121,7 +119,7 @@ export default function Home() {
   });
   const [expandedFighter, setExpandedFighter] = useState<'a' | 'b' | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showMobileChat, setShowMobileChat] = useState(false);
   const [pendingChatMessage, setPendingChatMessage] = useState<string | null>(null);
 
   // Handler for Key Moment clicks - auto-prompts chat
@@ -218,39 +216,30 @@ export default function Home() {
     }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
 
-        {/* Header - Compact on mobile with hamburger */}
+        {/* Header */}
         <header style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: isMobile ? 'space-between' : 'center',
+          justifyContent: 'center',
           marginBottom: isMobile ? '12px' : '32px',
-          textAlign: isMobile ? 'left' : 'center',
-          flexDirection: isMobile ? 'row' : 'column',
+          textAlign: 'center',
+          flexDirection: 'column',
         }}>
-          <div>
-            <h1 style={{
-              fontSize: isMobile ? '20px' : '36px',
-              fontWeight: 700,
-              margin: 0,
-              background: 'linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.7) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              {isMobile ? 'Fight Analyst' : 'The Fight Analyst'}
-            </h1>
-            {!isMobile && (
-              <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '14px' }}>
-                AI-powered fight breakdown
-              </p>
-            )}
-          </div>
-          {/* Hamburger in header on mobile */}
-          {isMobile && analysis.report && (
-            <HamburgerMenu
-              isOpen={sidebarOpen}
-              onToggle={() => setSidebarOpen(!sidebarOpen)}
-            />
+          <h1 style={{
+            fontSize: isMobile ? '20px' : '36px',
+            fontWeight: 700,
+            margin: 0,
+            background: 'linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.7) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+            {isMobile ? 'Fight Analyst' : 'The Fight Analyst'}
+          </h1>
+          {!isMobile && (
+            <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '14px' }}>
+              AI-powered fight breakdown
+            </p>
           )}
         </header>
 
@@ -281,41 +270,6 @@ export default function Home() {
                 <YouTubePlayer url={youtubeUrl} />
               </div>
 
-              {/* Mobile Menu Hint - Shows when analysis is ready */}
-              {isMobile && analysis.report && !sidebarOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    padding: '8px 12px',
-                    marginBottom: '8px',
-                    background: 'rgba(59, 130, 246, 0.1)',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(59, 130, 246, 0.2)',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => setSidebarOpen(true)}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent-primary)' }}>
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                  </svg>
-                  <span style={{
-                    fontSize: '12px',
-                    color: 'var(--accent-primary)',
-                    fontWeight: 500,
-                  }}>
-                    Tap for breakdown & key moments
-                  </span>
-                </motion.div>
-              )}
-
               {/* Progress Bar */}
               {analysis.isAnalyzing && (
                 <motion.div
@@ -344,144 +298,8 @@ export default function Home() {
                 </motion.div>
               )}
 
-              {/* Mobile Sidebar - Contains analysis content on mobile */}
-              {isMobile && analysis.report && (
-                <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)}>
-                  {/* Fighter Cards */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px',
-                    marginBottom: '20px',
-                  }}>
-                    <FighterCard
-                      fighter={analysis.report.fighter_a}
-                      assessment={analysis.report.fighter_a_assessment}
-                      color="blue"
-                      isExpanded={expandedFighter === 'a'}
-                      onToggle={() => setExpandedFighter(expandedFighter === 'a' ? null : 'a')}
-                    />
-                    <FighterCard
-                      fighter={analysis.report.fighter_b}
-                      assessment={analysis.report.fighter_b_assessment}
-                      color="red"
-                      isExpanded={expandedFighter === 'b'}
-                      onToggle={() => setExpandedFighter(expandedFighter === 'b' ? null : 'b')}
-                    />
-                  </div>
-
-                  {/* The Breakdown */}
-                  <div className="glass-card" style={{ padding: '16px', marginBottom: '20px' }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      marginBottom: '12px',
-                    }}>
-                      <Swords size={16} style={{ color: 'var(--accent-primary)' }} />
-                      <span style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: 'var(--text-primary)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}>
-                        The Breakdown
-                      </span>
-                    </div>
-                    <p style={{
-                      fontSize: '14px',
-                      color: 'var(--text-secondary)',
-                      lineHeight: 1.7,
-                      margin: 0,
-                    }}>
-                      {analysis.report.summary}
-                    </p>
-                    {analysis.report.coaching_insights && (
-                      <div style={{
-                        marginTop: '12px',
-                        padding: '12px',
-                        background: 'rgba(139, 92, 246, 0.06)',
-                        borderRadius: '6px',
-                        borderLeft: '3px solid #8b5cf6',
-                      }}>
-                        <p style={{
-                          fontSize: '13px',
-                          color: 'var(--text-secondary)',
-                          lineHeight: 1.6,
-                          margin: 0,
-                          fontStyle: 'italic',
-                        }}>
-                          {analysis.report.coaching_insights}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Key Moments */}
-                  {analysis.report.timestamped_clips && analysis.report.timestamped_clips.length > 0 && (
-                    <div className="glass-card" style={{ padding: '16px' }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        marginBottom: '12px',
-                      }}>
-                        <Clock size={16} style={{ color: 'var(--accent-primary)' }} />
-                        <span style={{
-                          fontSize: '14px',
-                          fontWeight: 600,
-                          color: 'var(--text-primary)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                        }}>
-                          Key Moments
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {analysis.report.timestamped_clips.slice(0, 5).map((clip, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => handleKeyMomentClick(clip)}
-                            style={{
-                              display: 'flex',
-                              gap: '10px',
-                              padding: '10px',
-                              background: 'rgba(255, 255, 255, 0.02)',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              transition: 'background 0.2s',
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
-                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'}
-                          >
-                            <span style={{
-                              fontSize: '12px',
-                              fontFamily: 'monospace',
-                              color: 'var(--accent-primary)',
-                              background: 'rgba(59, 130, 246, 0.1)',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              minWidth: '50px',
-                              textAlign: 'center',
-                            }}>
-                              {Math.floor(clip.t0 / 60)}:{String(Math.floor(clip.t0 % 60)).padStart(2, '0')}
-                            </span>
-                            <span style={{
-                              fontSize: '13px',
-                              color: 'var(--text-primary)',
-                              flex: 1,
-                            }}>
-                              {clip.label}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </Sidebar>
-              )}
-
+              {/* Analysis Content Wrapper for PDF Export */}
+              <div id="analysis-content">
               {/* === EVENT INFO (subtle badge) === */}
               {analysis.report && (analysis.report.event || analysis.report.matchup_number) && (
                 <motion.div
@@ -526,16 +344,16 @@ export default function Home() {
               )}
 
 
-              {/* === 1. FIGHTER CARDS (Expandable) - Desktop Only === */}
-              {!isMobile && analysis.report && (
+              {/* === 1. FIGHTER CARDS (Expandable) === */}
+              {analysis.report && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
                     gap: '12px',
-                    marginBottom: '20px',
+                    marginBottom: isMobile ? '12px' : '20px',
                   }}
                 >
                   <FighterCard
@@ -555,25 +373,25 @@ export default function Home() {
                 </motion.div>
               )}
 
-              {/* === 2. FIGHT ANALYSIS - Desktop Only === */}
-              {!isMobile && analysis.report && (
+              {/* === 2. FIGHT ANALYSIS === */}
+              {analysis.report && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                   className="glass-card"
-                  style={{ padding: '20px', marginBottom: '20px' }}
+                  style={{ padding: isMobile ? '14px' : '20px', marginBottom: isMobile ? '12px' : '20px' }}
                 >
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    marginBottom: '16px',
+                    marginBottom: isMobile ? '12px' : '16px',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Swords size={18} style={{ color: 'var(--accent-primary)' }} />
+                      <Swords size={isMobile ? 16 : 18} style={{ color: 'var(--accent-primary)' }} />
                       <span style={{
-                        fontSize: '15px',
+                        fontSize: isMobile ? '13px' : '15px',
                         fontWeight: 600,
                         color: 'var(--text-primary)',
                         textTransform: 'uppercase',
@@ -601,7 +419,7 @@ export default function Home() {
                   </div>
 
                   <p style={{
-                    fontSize: '15px',
+                    fontSize: isMobile ? '14px' : '15px',
                     color: 'var(--text-secondary)',
                     lineHeight: 1.8,
                     whiteSpace: 'pre-wrap',
@@ -612,14 +430,14 @@ export default function Home() {
                   {/* Coaching Insights inline */}
                   {analysis.report.coaching_insights && (
                     <div style={{
-                      marginTop: '16px',
-                      padding: '14px',
+                      marginTop: isMobile ? '12px' : '16px',
+                      padding: isMobile ? '12px' : '14px',
                       background: 'rgba(139, 92, 246, 0.06)',
                       borderRadius: '8px',
                       borderLeft: '3px solid #8b5cf6',
                     }}>
                       <p style={{
-                        fontSize: '14px',
+                        fontSize: isMobile ? '13px' : '14px',
                         color: 'var(--text-secondary)',
                         lineHeight: 1.7,
                         margin: 0,
@@ -632,14 +450,14 @@ export default function Home() {
                 </motion.div>
               )}
 
-              {/* === 3. KEY MOMENTS (max 5) - Desktop Only === */}
-              {!isMobile && analysis.report?.timestamped_clips && analysis.report.timestamped_clips.length > 0 && (
+              {/* === 3. KEY MOMENTS (max 5) === */}
+              {analysis.report?.timestamped_clips && analysis.report.timestamped_clips.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 }}
                   className="glass-card"
-                  style={{ padding: '20px', marginBottom: '20px' }}
+                  style={{ padding: isMobile ? '14px' : '20px', marginBottom: isMobile ? '12px' : '20px' }}
                 >
                   <div style={{
                     display: 'flex',
@@ -729,6 +547,7 @@ export default function Home() {
                   </div>
                 </motion.div>
               )}
+              </div>{/* End analysis-content wrapper */}
 
               {/* Error Display */}
               {analysis.error && !analysis.isAnalyzing && (
@@ -766,15 +585,91 @@ export default function Home() {
                 </motion.div>
               )}
 
-              {/* === 4. CHAT SECTION - Full width on mobile === */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                style={{ width: '100%' }}
-              >
-                {/* Hide label on mobile for more space */}
-                {!isMobile && (
+              {/* === 4. ACTION BUTTONS (Mobile) or CHAT (Desktop) === */}
+              {isMobile && analysis.report ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    marginTop: '8px',
+                  }}
+                >
+                  {/* Export PDF Button */}
+                  <motion.button
+                    onClick={async () => {
+                      const html2pdf = (await import('html2pdf.js')).default;
+                      const element = document.getElementById('analysis-content');
+                      if (element) {
+                        html2pdf()
+                          .set({
+                            margin: 10,
+                            filename: 'fight-analysis.pdf',
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: { scale: 2 },
+                            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                          })
+                          .from(element)
+                          .save();
+                      }
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      width: '100%',
+                      padding: '14px 20px',
+                      background: 'transparent',
+                      border: '1px solid var(--glass-border)',
+                      borderRadius: '12px',
+                      color: 'var(--text-secondary)',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <Download size={18} />
+                    Export Analysis (PDF)
+                  </motion.button>
+
+                  {/* Let's Get Meta Button */}
+                  <motion.button
+                    onClick={() => setShowMobileChat(true)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      width: '100%',
+                      padding: '16px 20px',
+                      background: 'var(--accent-gradient)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      color: 'white',
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                    }}
+                  >
+                    <MessageSquare size={20} />
+                    Let&apos;s Get Meta
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  style={{ width: '100%' }}
+                >
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -792,20 +687,125 @@ export default function Home() {
                       Ask About the Fight
                     </span>
                   </div>
-                )}
-                <div style={{
-                  height: isMobile ? 'calc(100vh - 380px)' : 'calc(100vh - 200px)',
-                  minHeight: isMobile ? '300px' : '400px',
-                  maxHeight: isMobile ? 'none' : '800px',
-                  width: '100%',
-                }}>
-                  <ChatPanel
-                    analysisId={analysis.analysisId}
-                    pendingMessage={pendingChatMessage || undefined}
-                    onMessageSent={() => setPendingChatMessage(null)}
-                  />
-                </div>
-              </motion.div>
+                  <div style={{
+                    height: 'calc(100vh - 200px)',
+                    minHeight: '400px',
+                    maxHeight: '800px',
+                    width: '100%',
+                  }}>
+                    <ChatPanel
+                      analysisId={analysis.analysisId}
+                      pendingMessage={pendingChatMessage || undefined}
+                      onMessageSent={() => setPendingChatMessage(null)}
+                    />
+                  </div>
+                  {/* Desktop PDF Export Button */}
+                  {analysis.report && (
+                    <motion.button
+                      onClick={async () => {
+                        const html2pdf = (await import('html2pdf.js')).default;
+                        const element = document.getElementById('analysis-content');
+                        if (element) {
+                          html2pdf()
+                            .set({
+                              margin: 10,
+                              filename: 'fight-analysis.pdf',
+                              image: { type: 'jpeg', quality: 0.98 },
+                              html2canvas: { scale: 2 },
+                              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                            })
+                            .from(element)
+                            .save();
+                        }
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      style={{
+                        marginTop: '16px',
+                        padding: '10px 16px',
+                        background: 'transparent',
+                        border: '1px solid var(--glass-border)',
+                        borderRadius: '8px',
+                        color: 'var(--text-muted)',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <Download size={16} />
+                      Export Analysis (PDF)
+                    </motion.button>
+                  )}
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* === FULL-SCREEN MOBILE CHAT MODAL === */}
+        <AnimatePresence>
+          {showMobileChat && (
+            <motion.div
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'var(--bg-primary)',
+                zIndex: 100,
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{
+                padding: '12px 16px',
+                borderBottom: '1px solid var(--glass-border)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                background: 'rgba(0, 0, 0, 0.3)',
+                backdropFilter: 'blur(10px)',
+              }}>
+                <motion.button
+                  onClick={() => setShowMobileChat(false)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--accent-primary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                  }}
+                >
+                  <ArrowLeft size={18} />
+                  Back to Analysis
+                </motion.button>
+              </div>
+
+              {/* Full Chat Panel */}
+              <div style={{
+                flex: 1,
+                overflow: 'hidden',
+              }}>
+                <ChatPanel
+                  analysisId={analysis.analysisId}
+                  pendingMessage={pendingChatMessage || undefined}
+                  onMessageSent={() => setPendingChatMessage(null)}
+                />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
