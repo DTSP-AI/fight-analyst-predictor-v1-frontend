@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, ChevronDown, MessageSquare, Loader2, Clock, Swords, ArrowLeft, Download } from 'lucide-react';
+import { User, ChevronDown, MessageSquare, Loader2, Clock, Swords, ArrowLeft, Download, X, Zap } from 'lucide-react';
 import YouTubeInput from './components/YouTubeInput';
 import YouTubePlayer from './components/YouTubePlayer';
 import ChatPanel from './components/ChatPanel';
@@ -121,6 +121,39 @@ export default function Home() {
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [pendingChatMessage, setPendingChatMessage] = useState<string | null>(null);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  const [videoBottom, setVideoBottom] = useState(0);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+
+  // Check for first-time visitor and show welcome popup
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem('fightAnalyst_welcomeSeen');
+    if (!hasSeenWelcome) {
+      setShowWelcomePopup(true);
+    }
+  }, []);
+
+  const handleCloseWelcome = () => {
+    localStorage.setItem('fightAnalyst_welcomeSeen', 'true');
+    setShowWelcomePopup(false);
+  };
+
+  // Track video container bottom position for mobile chat
+  useEffect(() => {
+    const updateVideoBottom = () => {
+      if (videoContainerRef.current) {
+        const rect = videoContainerRef.current.getBoundingClientRect();
+        setVideoBottom(rect.bottom);
+      }
+    };
+    updateVideoBottom();
+    window.addEventListener('resize', updateVideoBottom);
+    window.addEventListener('scroll', updateVideoBottom);
+    return () => {
+      window.removeEventListener('resize', updateVideoBottom);
+      window.removeEventListener('scroll', updateVideoBottom);
+    };
+  }, [youtubeUrl]);
 
   // Handler for Key Moment clicks - auto-prompts chat
   const handleKeyMomentClick = useCallback((clip: TimestampedClip) => {
@@ -263,10 +296,13 @@ export default function Home() {
               exit={{ opacity: 0 }}
             >
               {/* Video Player - 100% width on mobile */}
-              <div style={{
-                marginBottom: isMobile ? '8px' : '20px',
-                width: '100%',
-              }}>
+              <div
+                ref={videoContainerRef}
+                style={{
+                  marginBottom: isMobile ? '8px' : '20px',
+                  width: '100%',
+                }}
+              >
                 <YouTubePlayer url={youtubeUrl} />
               </div>
 
@@ -602,19 +638,52 @@ export default function Home() {
                   <motion.button
                     onClick={async () => {
                       const html2pdf = (await import('html2pdf.js')).default;
-                      const element = document.getElementById('analysis-content');
-                      if (element) {
-                        html2pdf()
-                          .set({
-                            margin: 10,
-                            filename: 'fight-analysis.pdf',
-                            image: { type: 'jpeg', quality: 0.98 },
-                            html2canvas: { scale: 2 },
-                            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                          })
-                          .from(element)
-                          .save();
+                      const analysisEl = document.getElementById('analysis-content');
+                      const chatEl = document.getElementById('mobile-chat-content');
+
+                      // Create a combined container for PDF
+                      const pdfContainer = document.createElement('div');
+                      pdfContainer.style.background = '#1a1a2e';
+                      pdfContainer.style.color = '#ffffff';
+                      pdfContainer.style.padding = '20px';
+
+                      if (analysisEl) {
+                        const analysisClone = analysisEl.cloneNode(true) as HTMLElement;
+                        pdfContainer.appendChild(analysisClone);
                       }
+
+                      if (chatEl) {
+                        const chatHeader = document.createElement('h2');
+                        chatHeader.textContent = 'Chat Thread';
+                        chatHeader.style.marginTop = '30px';
+                        chatHeader.style.marginBottom = '15px';
+                        chatHeader.style.color = '#3b82f6';
+                        chatHeader.style.borderTop = '1px solid #333';
+                        chatHeader.style.paddingTop = '20px';
+                        pdfContainer.appendChild(chatHeader);
+
+                        const chatClone = chatEl.cloneNode(true) as HTMLElement;
+                        chatClone.style.height = 'auto';
+                        chatClone.style.maxHeight = 'none';
+                        chatClone.style.overflow = 'visible';
+                        pdfContainer.appendChild(chatClone);
+                      }
+
+                      document.body.appendChild(pdfContainer);
+
+                      html2pdf()
+                        .set({
+                          margin: 10,
+                          filename: 'fight-analysis.pdf',
+                          image: { type: 'jpeg', quality: 0.98 },
+                          html2canvas: { scale: 2, backgroundColor: '#1a1a2e' },
+                          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                        })
+                        .from(pdfContainer)
+                        .save()
+                        .then(() => {
+                          document.body.removeChild(pdfContainer);
+                        });
                     }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -687,12 +756,15 @@ export default function Home() {
                       Ask About the Fight
                     </span>
                   </div>
-                  <div style={{
-                    height: 'calc(100vh - 200px)',
-                    minHeight: '400px',
-                    maxHeight: '800px',
-                    width: '100%',
-                  }}>
+                  <div
+                    id="chat-content"
+                    style={{
+                      height: 'calc(100vh - 200px)',
+                      minHeight: '400px',
+                      maxHeight: '800px',
+                      width: '100%',
+                    }}
+                  >
                     <ChatPanel
                       analysisId={analysis.analysisId}
                       pendingMessage={pendingChatMessage || undefined}
@@ -704,19 +776,52 @@ export default function Home() {
                     <motion.button
                       onClick={async () => {
                         const html2pdf = (await import('html2pdf.js')).default;
-                        const element = document.getElementById('analysis-content');
-                        if (element) {
-                          html2pdf()
-                            .set({
-                              margin: 10,
-                              filename: 'fight-analysis.pdf',
-                              image: { type: 'jpeg', quality: 0.98 },
-                              html2canvas: { scale: 2 },
-                              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                            })
-                            .from(element)
-                            .save();
+                        const analysisEl = document.getElementById('analysis-content');
+                        const chatEl = document.getElementById('chat-content');
+
+                        // Create a combined container for PDF
+                        const pdfContainer = document.createElement('div');
+                        pdfContainer.style.background = '#1a1a2e';
+                        pdfContainer.style.color = '#ffffff';
+                        pdfContainer.style.padding = '20px';
+
+                        if (analysisEl) {
+                          const analysisClone = analysisEl.cloneNode(true) as HTMLElement;
+                          pdfContainer.appendChild(analysisClone);
                         }
+
+                        if (chatEl) {
+                          const chatHeader = document.createElement('h2');
+                          chatHeader.textContent = 'Chat Thread';
+                          chatHeader.style.marginTop = '30px';
+                          chatHeader.style.marginBottom = '15px';
+                          chatHeader.style.color = '#3b82f6';
+                          chatHeader.style.borderTop = '1px solid #333';
+                          chatHeader.style.paddingTop = '20px';
+                          pdfContainer.appendChild(chatHeader);
+
+                          const chatClone = chatEl.cloneNode(true) as HTMLElement;
+                          chatClone.style.height = 'auto';
+                          chatClone.style.maxHeight = 'none';
+                          chatClone.style.overflow = 'visible';
+                          pdfContainer.appendChild(chatClone);
+                        }
+
+                        document.body.appendChild(pdfContainer);
+
+                        html2pdf()
+                          .set({
+                            margin: 10,
+                            filename: 'fight-analysis.pdf',
+                            image: { type: 'jpeg', quality: 0.98 },
+                            html2canvas: { scale: 2, backgroundColor: '#1a1a2e' },
+                            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                          })
+                          .from(pdfContainer)
+                          .save()
+                          .then(() => {
+                            document.body.removeChild(pdfContainer);
+                          });
                       }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -745,58 +850,73 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* === FULL-SCREEN MOBILE CHAT MODAL === */}
+        {/* === MOBILE CHAT PANEL (Below Video) === */}
         <AnimatePresence>
-          {showMobileChat && (
+          {showMobileChat && isMobile && (
             <motion.div
-              initial={{ opacity: 0, y: '100%' }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: '100%' }}
+              exit={{ opacity: 0, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               style={{
                 position: 'fixed',
-                inset: 0,
+                top: videoBottom,
+                left: 0,
+                right: 0,
+                bottom: 0,
                 background: 'var(--bg-primary)',
                 zIndex: 100,
                 display: 'flex',
                 flexDirection: 'column',
+                borderTop: '2px solid var(--accent-primary)',
               }}
             >
               {/* Modal Header */}
               <div style={{
-                padding: '12px 16px',
+                padding: '10px 12px',
                 borderBottom: '1px solid var(--glass-border)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                background: 'rgba(0, 0, 0, 0.3)',
+                justifyContent: 'space-between',
+                background: 'rgba(0, 0, 0, 0.4)',
                 backdropFilter: 'blur(10px)',
               }}>
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <MessageSquare size={16} style={{ color: 'var(--accent-primary)' }} />
+                  Fight Chat
+                </span>
                 <motion.button
                   onClick={() => setShowMobileChat(false)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   style={{
-                    background: 'transparent',
+                    background: 'rgba(255, 255, 255, 0.1)',
                     border: 'none',
-                    color: 'var(--accent-primary)',
+                    color: 'var(--text-secondary)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    fontSize: '14px',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    fontSize: '13px',
                     fontWeight: 500,
                   }}
                 >
-                  <ArrowLeft size={18} />
-                  Back to Analysis
+                  <ArrowLeft size={16} />
+                  Back
                 </motion.button>
               </div>
 
-              {/* Full Chat Panel */}
-              <div style={{
+              {/* Chat Panel */}
+              <div id="mobile-chat-content" style={{
                 flex: 1,
                 overflow: 'hidden',
               }}>
@@ -824,6 +944,160 @@ export default function Home() {
           </footer>
         )}
       </div>
+
+      {/* === WELCOME POPUP FOR TESTERS === */}
+      <AnimatePresence>
+        {showWelcomePopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.85)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 200,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px',
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              style={{
+                background: 'linear-gradient(145deg, rgba(30, 30, 50, 0.98), rgba(20, 20, 35, 0.98))',
+                borderRadius: '20px',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                padding: isMobile ? '24px 20px' : '32px',
+                maxWidth: '500px',
+                width: '100%',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.15)',
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                marginBottom: '20px',
+              }}>
+                <div style={{
+                  background: 'var(--accent-gradient)',
+                  borderRadius: '12px',
+                  padding: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Zap size={24} style={{ color: 'white' }} />
+                </div>
+                <div>
+                  <h2 style={{
+                    fontSize: isMobile ? '20px' : '24px',
+                    fontWeight: 700,
+                    margin: 0,
+                    color: 'var(--text-primary)',
+                  }}>
+                    Welcome, Tester!
+                  </h2>
+                  <p style={{
+                    fontSize: '13px',
+                    color: 'var(--accent-primary)',
+                    margin: 0,
+                    fontWeight: 500,
+                  }}>
+                    Fight Analyst Beta
+                  </p>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div style={{
+                fontSize: '14px',
+                lineHeight: 1.7,
+                color: 'var(--text-secondary)',
+              }}>
+                <p style={{ marginBottom: '16px' }}>
+                  <strong style={{ color: 'var(--text-primary)' }}>The Fight Analyst</strong> uses AI to break down fight videos,
+                  providing tactical insights, key moments, and coaching analysis.
+                </p>
+
+                <div style={{
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  borderLeft: '3px solid var(--accent-primary)',
+                  padding: '12px 16px',
+                  borderRadius: '0 8px 8px 0',
+                  marginBottom: '16px',
+                }}>
+                  <strong style={{ color: 'var(--accent-primary)' }}>Pro Tip:</strong> For best results, use
+                  <strong style={{ color: 'var(--text-primary)' }}> full fight videos from YouTube</strong>.
+                  Highlights and clips work, but complete fights give deeper analysis.
+                </div>
+
+                <p style={{ marginBottom: '16px' }}>
+                  <span style={{ color: '#8b5cf6' }}>Coming Soon:</span> We&apos;re expanding to
+                  <strong style={{ color: 'var(--text-primary)' }}> motion capture capabilities</strong> for
+                  even more detailed technique breakdowns.
+                </p>
+
+                <p style={{ marginBottom: '16px' }}>
+                  After your analysis, use the <strong style={{ color: 'var(--text-primary)' }}>Export PDF</strong> button
+                  to save your analysis and chat thread.
+                </p>
+
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  borderLeft: '3px solid #ef4444',
+                  padding: '12px 16px',
+                  borderRadius: '0 8px 8px 0',
+                  marginBottom: '20px',
+                }}>
+                  <strong style={{ color: '#ef4444' }}>Found a bug?</strong> Take a screenshot and text it to Pete:
+                  <br />
+                  <span style={{
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    fontFamily: 'monospace',
+                  }}>
+                    727-400-2225
+                  </span>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <motion.button
+                onClick={handleCloseWelcome}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  width: '100%',
+                  padding: '16px 24px',
+                  background: 'var(--accent-gradient)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: 'white',
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                }}
+              >
+                Let&apos;s Get It On!!
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style jsx global>{`
         @keyframes spin {
