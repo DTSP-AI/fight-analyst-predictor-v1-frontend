@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, ChevronDown, MessageSquare, Loader2, Clock, Swords, ArrowLeft, Download, X, Zap } from 'lucide-react';
+import { User, ChevronDown, MessageSquare, Loader2, Clock, Swords, ArrowLeft, Download, X, Zap, Maximize2, Minimize2 } from 'lucide-react';
 import YouTubeInput from './components/YouTubeInput';
 import YouTubePlayer from './components/YouTubePlayer';
 import ChatPanel from './components/ChatPanel';
@@ -123,6 +123,7 @@ export default function Home() {
   const [pendingChatMessage, setPendingChatMessage] = useState<string | null>(null);
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
   const [videoBottom, setVideoBottom] = useState(0);
+  const [isChatExpanded, setIsChatExpanded] = useState(false);
   const videoContainerRef = useRef<HTMLDivElement>(null);
 
   // Check for first-time visitor and show welcome popup
@@ -621,7 +622,7 @@ export default function Home() {
                 </motion.div>
               )}
 
-              {/* === 4. ACTION BUTTONS (Mobile) or CHAT (Desktop) === */}
+              {/* === 4. ACTION BUTTONS (Mobile) or CHAT BUTTON (Desktop) === */}
               {isMobile && analysis.report ? (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -733,53 +734,50 @@ export default function Home() {
                   </motion.button>
                 </motion.div>
               ) : (
+                /* Desktop: Chat Button + PDF Export */
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  style={{ width: '100%' }}
-                >
-                  <div style={{
+                  style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    marginBottom: '12px',
-                  }}>
-                    <MessageSquare size={18} style={{ color: 'var(--accent-primary)' }} />
-                    <span style={{
-                      fontSize: '15px',
-                      fontWeight: 600,
-                      color: 'var(--text-primary)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}>
-                      Ask About the Fight
-                    </span>
-                  </div>
-                  <div
-                    id="chat-content"
+                    gap: '12px',
+                    marginTop: '8px',
+                  }}
+                >
+                  {/* Let's Get Meta Button (Desktop) */}
+                  <motion.button
+                    onClick={() => setIsChatExpanded(true)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     style={{
-                      height: 'calc(100vh - 200px)',
-                      minHeight: '400px',
-                      maxHeight: '800px',
-                      width: '100%',
+                      flex: 1,
+                      padding: '16px 20px',
+                      background: 'var(--accent-gradient)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      color: 'white',
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
                     }}
                   >
-                    <ChatPanel
-                      analysisId={analysis.analysisId}
-                      pendingMessage={pendingChatMessage || undefined}
-                      onMessageSent={() => setPendingChatMessage(null)}
-                    />
-                  </div>
+                    <MessageSquare size={20} />
+                    Let&apos;s Get Meta
+                  </motion.button>
+
                   {/* Desktop PDF Export Button */}
                   {analysis.report && (
                     <motion.button
                       onClick={async () => {
                         const html2pdf = (await import('html2pdf.js')).default;
                         const analysisEl = document.getElementById('analysis-content');
-                        const chatEl = document.getElementById('chat-content');
+                        const chatEl = document.getElementById('expanded-chat-content');
 
-                        // Create a combined container for PDF
                         const pdfContainer = document.createElement('div');
                         pdfContainer.style.background = '#1a1a2e';
                         pdfContainer.style.color = '#ffffff';
@@ -826,13 +824,12 @@ export default function Home() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       style={{
-                        marginTop: '16px',
-                        padding: '10px 16px',
+                        padding: '16px 20px',
                         background: 'transparent',
                         border: '1px solid var(--glass-border)',
-                        borderRadius: '8px',
-                        color: 'var(--text-muted)',
-                        fontSize: '13px',
+                        borderRadius: '12px',
+                        color: 'var(--text-secondary)',
+                        fontSize: '14px',
                         fontWeight: 500,
                         cursor: 'pointer',
                         display: 'flex',
@@ -840,8 +837,8 @@ export default function Home() {
                         gap: '8px',
                       }}
                     >
-                      <Download size={16} />
-                      Export Analysis (PDF)
+                      <Download size={18} />
+                      Export PDF
                     </motion.button>
                   )}
                 </motion.div>
@@ -919,6 +916,90 @@ export default function Home() {
               <div id="mobile-chat-content" style={{
                 flex: 1,
                 overflow: 'hidden',
+              }}>
+                <ChatPanel
+                  analysisId={analysis.analysisId}
+                  pendingMessage={pendingChatMessage || undefined}
+                  onMessageSent={() => setPendingChatMessage(null)}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* === DESKTOP EXPANDED CHAT PANEL (Full width, below video) === */}
+        <AnimatePresence>
+          {isChatExpanded && !isMobile && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              style={{
+                position: 'fixed',
+                top: videoBottom,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'var(--bg-primary)',
+                zIndex: 100,
+                display: 'flex',
+                flexDirection: 'column',
+                borderTop: '2px solid var(--accent-primary)',
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                padding: '12px 24px',
+                borderBottom: '1px solid var(--glass-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(0, 0, 0, 0.4)',
+                backdropFilter: 'blur(10px)',
+              }}>
+                <span style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}>
+                  <MessageSquare size={20} style={{ color: 'var(--accent-primary)' }} />
+                  Fight Chat
+                </span>
+                <motion.button
+                  onClick={() => setIsChatExpanded(false)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                  }}
+                >
+                  <Minimize2 size={18} />
+                  Collapse
+                </motion.button>
+              </div>
+
+              {/* Chat Panel - Full Width */}
+              <div id="expanded-chat-content" style={{
+                flex: 1,
+                overflow: 'hidden',
+                maxWidth: '1200px',
+                width: '100%',
+                margin: '0 auto',
+                padding: '0 24px',
               }}>
                 <ChatPanel
                   analysisId={analysis.analysisId}
