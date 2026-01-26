@@ -649,7 +649,7 @@ export default function Home() {
               )}
 
               {/* === 4. ACTION BUTTONS (Mobile) or CHAT BUTTON (Desktop) === */}
-              {isMobile && analysis.report ? (
+              {isMobile ? (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -661,7 +661,8 @@ export default function Home() {
                     marginTop: '8px',
                   }}
                 >
-                  {/* Export PDF Button */}
+                  {/* Export PDF Button - Only when report is ready */}
+                  {analysis.report && (
                   <motion.button
                     onClick={async () => {
                       const html2pdf = (await import('html2pdf.js')).default;
@@ -733,6 +734,7 @@ export default function Home() {
                     <Download size={18} />
                     Export Analysis (PDF)
                   </motion.button>
+                  )}
 
                   {/* Let's Get Meta Button */}
                   <motion.button
