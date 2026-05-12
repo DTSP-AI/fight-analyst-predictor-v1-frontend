@@ -2,11 +2,10 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, ChevronDown, MessageSquare, Loader2, Clock, Swords, ArrowLeft, Download, X, Zap, Maximize2, Minimize2, Menu, Share2, Settings, Target, BarChart3 } from 'lucide-react';
+import { User, ChevronDown, MessageSquare, Loader2, Clock, Swords, Download, X, Zap, Maximize2, Minimize2, Target } from 'lucide-react';
 import YouTubeInput from './components/YouTubeInput';
 import YouTubePlayer from './components/YouTubePlayer';
 import ChatPanel from './components/ChatPanel';
-import Sidebar from './components/Sidebar';
 import { startAnalysis, pollAnalysisStatus, APIError } from './lib/apiClient';
 import type { AnalysisState, FighterInfo, TimestampedClip } from './lib/types';
 
@@ -125,7 +124,6 @@ export default function Home() {
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
   const [videoBottom, setVideoBottom] = useState(0);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const videoContainerRef = useRef<HTMLDivElement>(null);
 
   // Check for first-time visitor and show welcome popup
@@ -260,31 +258,7 @@ export default function Home() {
           marginBottom: isMobile ? '12px' : '32px',
           textAlign: 'center',
           flexDirection: 'column',
-          position: 'relative',
         }}>
-          {/* Hamburger Menu Button */}
-          <motion.button
-            onClick={() => setSidebarOpen(true)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: '10px',
-              padding: isMobile ? '8px' : '10px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Menu size={isMobile ? 20 : 22} style={{ color: 'var(--text-primary)' }} />
-          </motion.button>
-
           <h1 style={{
             fontSize: isMobile ? '20px' : '36px',
             fontWeight: 700,
@@ -645,6 +619,71 @@ export default function Home() {
                   >
                     Try Again
                   </motion.button>
+                </motion.div>
+              )}
+
+              {/* === STUDY FOCUS CHIPS (auto-prompts chat) === */}
+              {analysis.report && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.18 }}
+                  className="glass-card"
+                  style={{
+                    padding: isMobile ? '12px 14px' : '14px 18px',
+                    marginBottom: isMobile ? '12px' : '12px',
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '10px',
+                  }}>
+                    <Target size={14} style={{ color: '#8b5cf6' }} />
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: 'var(--text-secondary)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>
+                      Study Focus — tap to ask
+                    </span>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '6px',
+                  }}>
+                    {['Footwork', 'Head Movement', 'Combinations', 'Defense', 'Cage Control', 'Clinch Work'].map((focus) => (
+                      <motion.button
+                        key={focus}
+                        onClick={() => {
+                          setPendingChatMessage(`Analyze the ${focus.toLowerCase()} in this fight`);
+                          if (isMobile) {
+                            setShowMobileChat(true);
+                          } else {
+                            setIsChatExpanded(true);
+                          }
+                        }}
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.96 }}
+                        style={{
+                          background: 'rgba(139, 92, 246, 0.1)',
+                          border: '1px solid rgba(139, 92, 246, 0.2)',
+                          borderRadius: '20px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          color: '#8b5cf6',
+                          cursor: 'pointer',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {focus}
+                      </motion.button>
+                    ))}
+                  </div>
                 </motion.div>
               )}
 
@@ -1056,282 +1095,6 @@ export default function Home() {
           </footer>
         )}
       </div>
-
-      {/* === SIDEBAR MENU === */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)}>
-        {/* Quick Stats Section */}
-        {analysis.report && (
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '12px',
-            }}>
-              <BarChart3 size={16} style={{ color: 'var(--accent-primary)' }} />
-              <span style={{
-                fontSize: '13px',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}>
-                Quick Stats
-              </span>
-            </div>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              borderRadius: '10px',
-              padding: '12px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Event</span>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                  {analysis.report.event || 'Unknown'}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Sport</span>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                  MMA
-                </span>
-              </div>
-              {analysis.report.matchup_number && analysis.report.matchup_number > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Meeting</span>
-                  <span style={{ color: 'var(--accent-primary)', fontWeight: 500 }}>
-                    #{analysis.report.matchup_number}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Key Moments Quick Jump */}
-        {analysis.report?.timestamped_clips && analysis.report.timestamped_clips.length > 0 && (
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '12px',
-            }}>
-              <Clock size={16} style={{ color: 'var(--accent-primary)' }} />
-              <span style={{
-                fontSize: '13px',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}>
-                Key Moments
-              </span>
-            </div>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-            }}>
-              {analysis.report.timestamped_clips.slice(0, 5).map((clip, idx) => (
-                <motion.button
-                  key={idx}
-                  onClick={() => {
-                    handleKeyMomentClick(clip);
-                    setSidebarOpen(false);
-                    if (isMobile) {
-                      setShowMobileChat(true);
-                    } else {
-                      setIsChatExpanded(true);
-                    }
-                  }}
-                  whileHover={{ scale: 1.02, backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
-                  whileTap={{ scale: 0.98 }}
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '10px 12px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                  }}
-                >
-                  <span style={{
-                    fontSize: '11px',
-                    fontFamily: 'monospace',
-                    color: 'var(--accent-primary)',
-                    background: 'rgba(59, 130, 246, 0.15)',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    minWidth: '45px',
-                    textAlign: 'center',
-                  }}>
-                    {formatTime(clip.t0)}
-                  </span>
-                  <span style={{
-                    fontSize: '12px',
-                    color: 'var(--text-secondary)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    flex: 1,
-                  }}>
-                    {clip.label}
-                  </span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Focus Areas */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '12px',
-          }}>
-            <Target size={16} style={{ color: '#8b5cf6' }} />
-            <span style={{
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}>
-              Study Focus
-            </span>
-          </div>
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '8px',
-          }}>
-            {['Footwork', 'Head Movement', 'Combinations', 'Defense', 'Cage Control', 'Clinch Work'].map((focus) => (
-              <motion.button
-                key={focus}
-                onClick={() => {
-                  setPendingChatMessage(`Analyze the ${focus.toLowerCase()} in this fight`);
-                  setSidebarOpen(false);
-                  if (isMobile) {
-                    setShowMobileChat(true);
-                  } else {
-                    setIsChatExpanded(true);
-                  }
-                }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                style={{
-                  background: 'rgba(139, 92, 246, 0.1)',
-                  border: '1px solid rgba(139, 92, 246, 0.2)',
-                  borderRadius: '20px',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  color: '#8b5cf6',
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                }}
-              >
-                {focus}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-
-        {/* Share & Export */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '12px',
-          }}>
-            <Share2 size={16} style={{ color: '#22c55e' }} />
-            <span style={{
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}>
-              Share & Export
-            </span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <motion.button
-              onClick={async () => {
-                if (navigator.share) {
-                  await navigator.share({
-                    title: 'Fight Analysis',
-                    text: 'Check out this fight breakdown!',
-                    url: window.location.href,
-                  });
-                } else {
-                  await navigator.clipboard.writeText(window.location.href);
-                  alert('Link copied to clipboard!');
-                }
-                setSidebarOpen(false);
-              }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              style={{
-                background: 'rgba(34, 197, 94, 0.1)',
-                border: '1px solid rgba(34, 197, 94, 0.2)',
-                borderRadius: '8px',
-                padding: '10px 14px',
-                fontSize: '13px',
-                color: '#22c55e',
-                cursor: 'pointer',
-                fontWeight: 500,
-                textAlign: 'left',
-              }}
-            >
-              Share Analysis Link
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Settings */}
-        <div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '12px',
-          }}>
-            <Settings size={16} style={{ color: 'var(--text-muted)' }} />
-            <span style={{
-              fontSize: '13px',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}>
-              Settings
-            </span>
-          </div>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            borderRadius: '10px',
-            padding: '12px',
-          }}>
-            <p style={{
-              fontSize: '12px',
-              color: 'var(--text-muted)',
-              margin: 0,
-            }}>
-              Voice mode and additional settings coming soon...
-            </p>
-          </div>
-        </div>
-      </Sidebar>
 
       {/* === WELCOME POPUP FOR TESTERS === */}
       <AnimatePresence>

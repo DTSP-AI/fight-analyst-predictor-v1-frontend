@@ -4,7 +4,6 @@
  */
 
 import type {
-  VideoUploadResponse,
   AnalyzeRequest,
   AnalyzeResponse,
   AnalysisStatusResponse,
@@ -12,7 +11,7 @@ import type {
   ChatResponse,
 } from './types';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001';
 
 /**
  * Custom error class for API errors.
@@ -66,60 +65,6 @@ async function apiRequest<T>(
     // Network or other errors
     throw new APIError(0, `Network error: ${(error as Error).message}`);
   }
-}
-
-/**
- * Upload a video file.
- */
-export async function uploadVideo(
-  file: File,
-  onProgress?: (progress: number) => void
-): Promise<VideoUploadResponse> {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const url = `${BACKEND_URL}/api/upload`;
-
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-
-    xhr.upload.addEventListener('progress', (event) => {
-      if (event.lengthComputable && onProgress) {
-        const progress = Math.round((event.loaded / event.total) * 100);
-        onProgress(progress);
-      }
-    });
-
-    xhr.addEventListener('load', () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          resolve(JSON.parse(xhr.responseText));
-        } catch {
-          reject(new APIError(xhr.status, 'Invalid JSON response'));
-        }
-      } else {
-        let detail = 'Upload failed';
-        try {
-          const errorData = JSON.parse(xhr.responseText);
-          detail = errorData.detail || detail;
-        } catch {
-          detail = xhr.responseText || detail;
-        }
-        reject(new APIError(xhr.status, detail));
-      }
-    });
-
-    xhr.addEventListener('error', () => {
-      reject(new APIError(0, 'Network error during upload'));
-    });
-
-    xhr.addEventListener('abort', () => {
-      reject(new APIError(0, 'Upload cancelled'));
-    });
-
-    xhr.open('POST', url);
-    xhr.send(formData);
-  });
 }
 
 /**
@@ -191,13 +136,6 @@ export async function sendChatMessage(
     method: 'POST',
     body: JSON.stringify(request),
   });
-}
-
-/**
- * Check API health.
- */
-export async function checkHealth(): Promise<{ status: string; version: string }> {
-  return apiRequest<{ status: string; version: string }>('/health');
 }
 
 /**

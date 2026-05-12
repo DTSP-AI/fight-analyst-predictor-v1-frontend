@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import TopNav from './components/TopNav';
+import LegalGate from './components/LegalGate';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -21,6 +23,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className={inter.className}>
+        <LegalGate />
+        <TopNav />
         {children}
       </body>
     </html>

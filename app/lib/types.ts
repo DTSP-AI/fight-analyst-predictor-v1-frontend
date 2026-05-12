@@ -18,19 +18,6 @@ export type AnalysisStatus =
 
 export type Stance = 'orthodox' | 'southpaw' | 'switch' | 'unknown';
 
-export type MessageRole = 'system' | 'human' | 'ai' | 'tool';
-
-// ============================================================================
-// Video Upload
-// ============================================================================
-
-export interface VideoUploadResponse {
-  video_id: string;
-  filename: string;
-  size_bytes: number;
-  message: string;
-}
-
 // ============================================================================
 // Analysis
 // ============================================================================
@@ -188,25 +175,8 @@ export interface ChatMessage {
 }
 
 // ============================================================================
-// API Error
-// ============================================================================
-
-export interface ApiError {
-  detail: string;
-  status: number;
-}
-
-// ============================================================================
 // UI State
 // ============================================================================
-
-export interface UploadState {
-  isUploading: boolean;
-  progress: number;
-  videoId?: string;
-  filename?: string;
-  error?: string;
-}
 
 export interface AnalysisState {
   isAnalyzing: boolean;
