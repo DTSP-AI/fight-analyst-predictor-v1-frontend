@@ -14,9 +14,7 @@
  */
 
 import type {
-  AthleteSummary,
   FighterSearchResult,
-  FightSummary,
   PipelineStatus,
   PredictAcceptedResponse,
   PredictionStatusResponse,
@@ -139,20 +137,6 @@ export async function pollPredictionStatus(
 // ----------------------------------------------------------------------------
 // KG read-side
 // ----------------------------------------------------------------------------
-
-export async function getAthleteProfile(
-  canonicalName: string
-): Promise<AthleteSummary> {
-  const safe = encodeURIComponent(canonicalName);
-  return apiRequest<AthleteSummary>(`/athletes/${safe}/profile`);
-}
-
-export async function getAthleteFights(
-  canonicalName: string
-): Promise<FightSummary[]> {
-  const safe = encodeURIComponent(canonicalName);
-  return apiRequest<FightSummary[]>(`/athletes/${safe}/fights`);
-}
 
 // ----------------------------------------------------------------------------
 // Fighter fight-history search
