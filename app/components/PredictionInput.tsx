@@ -365,6 +365,28 @@ function SearchModeBody({
   const result = state.searchResult;
   if (!result) return null;
 
+  if (result.search_failed) {
+    return (
+      <div
+        style={{
+          padding: '10px 12px',
+          fontSize: '12px',
+          color: 'var(--error)',
+          background: 'rgba(239,68,68,0.08)',
+          borderLeft: '3px solid var(--error)',
+          borderRadius: 'var(--radius-sm)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}
+      >
+        <AlertCircle size={14} />
+        Fight search is temporarily unavailable. Paste YouTube URLs manually
+        below.
+      </div>
+    );
+  }
+
   if (result.slots.length === 0) {
     return (
       <div

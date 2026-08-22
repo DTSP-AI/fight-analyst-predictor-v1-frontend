@@ -311,4 +311,7 @@ export interface FighterSearchResult {
   cached: boolean;
   fetched_at: string;
   notes: string[];
+  /** True when the upstream search provider errored — render as
+   *  "search unavailable", never as "no fights found". */
+  search_failed?: boolean;
 }
