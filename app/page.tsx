@@ -139,20 +139,31 @@ export default function Home() {
     setShowWelcomePopup(false);
   };
 
-  // Track video container bottom position for mobile chat
+  // Track video container bottom position for mobile chat.
+  // rAF-throttled: scroll/resize fire per-frame or faster, and an unthrottled
+  // setState here re-renders the whole page on every scroll tick.
   useEffect(() => {
+    let rafId: number | null = null;
     const updateVideoBottom = () => {
       if (videoContainerRef.current) {
         const rect = videoContainerRef.current.getBoundingClientRect();
         setVideoBottom(rect.bottom);
       }
     };
+    const scheduleUpdate = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        updateVideoBottom();
+      });
+    };
     updateVideoBottom();
-    window.addEventListener('resize', updateVideoBottom);
-    window.addEventListener('scroll', updateVideoBottom);
+    window.addEventListener('resize', scheduleUpdate, { passive: true });
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
     return () => {
-      window.removeEventListener('resize', updateVideoBottom);
-      window.removeEventListener('scroll', updateVideoBottom);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', scheduleUpdate);
+      window.removeEventListener('scroll', scheduleUpdate);
     };
   }, [youtubeUrl]);
 
@@ -162,14 +173,25 @@ export default function Home() {
     setPendingChatMessage(`Break down what happened at ${time}: "${clip.label}"`);
   }, []);
 
-  // Detect mobile screen size
+  // Detect mobile screen size (rAF-throttled; setState only on actual change)
   useEffect(() => {
+    let rafId: number | null = null;
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
+    const scheduleCheck = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        checkMobile();
+      });
+    };
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener('resize', scheduleCheck, { passive: true });
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', scheduleCheck);
+    };
   }, []);
 
   const handleYouTubeSubmit = useCallback(async (url: string) => {

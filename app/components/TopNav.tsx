@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Swords, BarChart3 } from 'lucide-react';
+import { Menu, X, Swords, BarChart3, Network } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -15,6 +15,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Analyst', icon: <BarChart3 size={16} /> },
   { href: '/predict', label: 'Predictor', icon: <Swords size={16} /> },
+  { href: '/graph', label: 'Graph', icon: <Network size={16} /> },
 ];
 
 function isActive(pathname: string | null, href: string): boolean {

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { User, TrendingUp, Shield, Activity, ChevronDown } from 'lucide-react';
+import { User, Activity, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import type { AthleteProfile, CampIntel } from '../lib/predictorTypes';
 
@@ -29,9 +29,8 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function topN<T>(arr: T[], n: number): T[] {
-  return arr.slice(0, n);
-}
+// topN helper was used by the now-stripped recurring_offense /
+// recurring_vulnerabilities rendering. Removed in Phase 1.
 
 export default function AthleteProfileCard({
   fighterName,
@@ -48,10 +47,10 @@ export default function AthleteProfileCard({
       }`
     : '—';
 
-  const styleStr = profile
-    ? profile.secondary_style && profile.secondary_style !== profile.primary_style
-      ? `${profile.primary_style} / ${profile.secondary_style}`
-      : profile.primary_style
+  // Phase 1 strip: style classification was removed from AthleteProfile.
+  // Header now shows finish rate as the secondary identifier.
+  const finishStr = profile
+    ? `finish rate ${profile.finish_rate.toFixed(2)}`
     : '—';
 
   return (
@@ -101,7 +100,7 @@ export default function AthleteProfileCard({
                 marginTop: '2px',
               }}
             >
-              {recordStr} in window · {styleStr} · {profile.fights_analyzed} fight
+              {recordStr} in window · {finishStr} · {profile.fights_analyzed} fight
               {profile.fights_analyzed !== 1 ? 's' : ''} analyzed
             </div>
           )}
@@ -167,6 +166,8 @@ export default function AthleteProfileCard({
                   value={`${profile.verified_fight_count}/${profile.fights_analyzed}`}
                 />
               </div>
+              {/* Career averages (real ufcstats numbers) replace the
+                  stripped cardio/dominance fields. */}
               <div
                 style={{
                   background: 'rgba(255,255,255,0.03)',
@@ -174,22 +175,30 @@ export default function AthleteProfileCard({
                   padding: '10px',
                 }}
               >
-                <StatRow
-                  label="Avg dominant thru"
-                  value={`R${profile.avg_dominant_through_round.toFixed(1)}`}
-                />
-                <StatRow
-                  label="Faded round (mode)"
-                  value={
-                    profile.faded_in_round_mode !== null
-                      ? `R${profile.faded_in_round_mode}`
-                      : '—'
-                  }
-                />
-                <StatRow
-                  label="Cardio decay"
-                  value={profile.avg_cardio_decay_score.toFixed(2)}
-                />
+                {profile.career_stats?.sig_strikes_landed_per_min !== undefined && (
+                  <StatRow
+                    label="SLpM"
+                    value={profile.career_stats.sig_strikes_landed_per_min.toFixed(2)}
+                  />
+                )}
+                {profile.career_stats?.sig_strike_accuracy_pct !== undefined && (
+                  <StatRow
+                    label="Str. Acc."
+                    value={`${profile.career_stats.sig_strike_accuracy_pct.toFixed(0)}%`}
+                  />
+                )}
+                {profile.career_stats?.sig_strike_defense_pct !== undefined && (
+                  <StatRow
+                    label="Str. Def."
+                    value={`${profile.career_stats.sig_strike_defense_pct.toFixed(0)}%`}
+                  />
+                )}
+                {profile.career_stats?.takedown_defense_pct !== undefined && (
+                  <StatRow
+                    label="TD Def."
+                    value={`${profile.career_stats.takedown_defense_pct.toFixed(0)}%`}
+                  />
+                )}
               </div>
             </div>
 
@@ -214,52 +223,6 @@ export default function AthleteProfileCard({
                     </span>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {/* Top techniques */}
-            {profile.recurring_offense.length > 0 && (
-              <div>
-                <SectionLabel icon={<TrendingUp size={14} />} text="Recurring offense" />
-                <ul style={{ margin: 0, paddingLeft: '16px' }}>
-                  {topN(profile.recurring_offense, 5).map(([pattern, count], idx) => (
-                    <li
-                      key={idx}
-                      style={{
-                        fontSize: '12px',
-                        color: 'var(--text-secondary)',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {pattern}{' '}
-                      <span style={{ color: 'var(--text-muted)' }}>×{count}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Vulnerabilities */}
-            {profile.recurring_vulnerabilities.length > 0 && (
-              <div>
-                <SectionLabel icon={<Shield size={14} />} text="Recurring vulnerabilities" />
-                <ul style={{ margin: 0, paddingLeft: '16px' }}>
-                  {topN(profile.recurring_vulnerabilities, 5).map(
-                    ([pattern, count], idx) => (
-                      <li
-                        key={idx}
-                        style={{
-                          fontSize: '12px',
-                          color: 'var(--text-secondary)',
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {pattern}{' '}
-                        <span style={{ color: 'var(--text-muted)' }}>×{count}</span>
-                      </li>
-                    )
-                  )}
-                </ul>
               </div>
             )}
 

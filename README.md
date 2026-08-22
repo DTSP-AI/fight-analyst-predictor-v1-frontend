@@ -17,7 +17,7 @@ npm install
 cp .env.example .env.local
 
 # Edit .env.local with your configuration
-# Set NEXT_PUBLIC_API_URL to your backend URL
+# Set NEXT_PUBLIC_BACKEND_URL to your backend URL
 
 # Run development server
 npm run dev
@@ -29,7 +29,7 @@ The app will be available at http://localhost:3000
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8001/api` |
+| `NEXT_PUBLIC_BACKEND_URL` | Backend base URL (clients append `/api`) | `http://localhost:8001` |
 
 ## Features
 

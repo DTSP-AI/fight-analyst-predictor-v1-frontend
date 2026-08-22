@@ -30,6 +30,8 @@ export type Method =
   | 'NC'
   | 'UNKNOWN';
 
+// Kept for legacy frontend imports; backend AthleteProfile no longer carries
+// style classification after the Phase 1 strip.
 export type PrimaryStyle =
   | 'striker'
   | 'wrestler'
@@ -64,20 +66,12 @@ export interface AthleteProfile {
   finish_rate: number;
   method_breakdown: Record<string, number>;
 
-  technique_frequency: Record<string, number>;
-  technique_per_minute: Record<string, number>;
-
-  // Pydantic emits tuples as 2-element arrays in JSON
-  recurring_offense: Array<[string, number]>;
-  recurring_vulnerabilities: Array<[string, number]>;
-  recurring_tells: Array<[string, number]>;
-
-  avg_dominant_through_round: number;
-  faded_in_round_mode: number | null;
-  avg_cardio_decay_score: number;
-
-  primary_style: PrimaryStyle;
-  secondary_style: PrimaryStyle | null;
+  // Career averages from structured sources (ufcstats et al.). Keys mirror
+  // backend: sig_strikes_landed_per_min, sig_strike_accuracy_pct,
+  // sig_strikes_absorbed_per_min, sig_strike_defense_pct,
+  // takedown_avg_per_15min, takedown_accuracy_pct,
+  // takedown_defense_pct, submission_avg_per_15min
+  career_stats: Record<string, number>;
 
   source_fight_urls: string[];
   verified_fight_count: number;
@@ -126,19 +120,11 @@ export interface MatchupFeatures {
   fighter_b_name: string;
   sport: Sport;
 
-  style_overlap: number;
-  style_clash: string;
-
   reach_diff_in: number | null;
   age_diff_yrs: number | null;
   layoff_diff_days: number | null;
 
   common_opponents: CommonOpponentResult[];
-
-  a_offense_hits_b_vuln: string[];
-  b_offense_hits_a_vuln: string[];
-  a_defense_neutralizes_b: string[];
-  b_defense_neutralizes_a: string[];
 }
 
 // ============================================================================

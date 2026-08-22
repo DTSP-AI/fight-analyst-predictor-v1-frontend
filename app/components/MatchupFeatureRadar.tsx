@@ -97,49 +97,6 @@ function DeltaBar({
   );
 }
 
-function CrossList({
-  label,
-  items,
-  color,
-}: {
-  label: string;
-  items: string[];
-  color: string;
-}) {
-  if (!items || items.length === 0) return null;
-  return (
-    <div>
-      <div
-        style={{
-          fontSize: '11px',
-          color,
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          marginBottom: '6px',
-        }}
-      >
-        {label}
-      </div>
-      <ul style={{ margin: 0, paddingLeft: '16px' }}>
-        {items.map((item, idx) => (
-          <li
-            key={idx}
-            style={{
-              fontSize: '12px',
-              color: 'var(--text-secondary)',
-              lineHeight: 1.5,
-              marginBottom: '2px',
-            }}
-          >
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 export default function MatchupFeatureRadar({ features }: Props) {
   return (
     <div className="glass-card" style={{ padding: '20px' }}>
@@ -163,108 +120,45 @@ export default function MatchupFeatureRadar({ features }: Props) {
         >
           Matchup Features
         </span>
-        <span
-          style={{
-            marginLeft: 'auto',
-            fontSize: '11px',
-            color: 'var(--text-muted)',
-            background: 'rgba(255,255,255,0.04)',
-            padding: '3px 8px',
-            borderRadius: '10px',
-          }}
-        >
-          {features.style_clash}
-        </span>
       </div>
 
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          maxWidth: '420px',
         }}
       >
-        {/* Deltas (A − B) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div
-            style={{
-              fontSize: '11px',
-              color: 'var(--text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}
-          >
-            Deltas (A − B)
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: '12px',
-              color: 'var(--text-secondary)',
-            }}
-          >
-            <span>Style overlap</span>
-            <span style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>
-              {(features.style_overlap * 100).toFixed(0)}%
-            </span>
-          </div>
-
-          <DeltaBar
-            label="Reach"
-            value={features.reach_diff_in}
-            unit="in"
-            fmt={(n) => n.toFixed(1)}
-          />
-          <DeltaBar
-            label="Age"
-            value={features.age_diff_yrs}
-            unit="yrs"
-            fmt={(n) => n.toFixed(1)}
-          />
-          <DeltaBar
-            label="Layoff"
-            value={features.layoff_diff_days}
-            unit="days"
-            fmt={(n) => n.toFixed(0)}
-          />
+        <div
+          style={{
+            fontSize: '11px',
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+          }}
+        >
+          Deltas (A − B)
         </div>
 
-        {/* Cross-pollination */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div
-            style={{
-              fontSize: '11px',
-              color: 'var(--text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}
-          >
-            Cross-pollination
-          </div>
-
-          <CrossList
-            label={`${features.fighter_a_name} hits B's vulnerabilities`}
-            items={features.a_offense_hits_b_vuln}
-            color="#3b82f6"
-          />
-          <CrossList
-            label={`${features.fighter_b_name} hits A's vulnerabilities`}
-            items={features.b_offense_hits_a_vuln}
-            color="#ef4444"
-          />
-          <CrossList
-            label={`${features.fighter_a_name} neutralizes B`}
-            items={features.a_defense_neutralizes_b}
-            color="#3b82f6"
-          />
-          <CrossList
-            label={`${features.fighter_b_name} neutralizes A`}
-            items={features.b_defense_neutralizes_a}
-            color="#ef4444"
-          />
-        </div>
+        <DeltaBar
+          label="Reach"
+          value={features.reach_diff_in}
+          unit="in"
+          fmt={(n) => n.toFixed(1)}
+        />
+        <DeltaBar
+          label="Age"
+          value={features.age_diff_yrs}
+          unit="yrs"
+          fmt={(n) => n.toFixed(1)}
+        />
+        <DeltaBar
+          label="Layoff"
+          value={features.layoff_diff_days}
+          unit="days"
+          fmt={(n) => n.toFixed(0)}
+        />
       </div>
 
       {/* Common opponents */}

@@ -10,6 +10,7 @@ interface VoiceChatProps {
   analysisId?: string;
   onTranscript?: (text: string, role: 'user' | 'assistant') => void;
   onClose?: () => void;
+  onConnectionChange?: (connected: boolean) => void;
 }
 
 type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -24,11 +25,11 @@ interface Transcript {
 
 export default function VoiceChat({
   sessionId,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   analysisId,
   onTranscript,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onClose,
+  onConnectionChange,
 }: VoiceChatProps) {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -46,6 +47,11 @@ export default function VoiceChat({
     transcriptsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcripts]);
 
+  // Report connection status up to the parent (drives the VoiceToggle dot)
+  useEffect(() => {
+    onConnectionChange?.(connectionState === 'connected');
+  }, [connectionState, onConnectionChange]);
+
   // Connect to WebSocket
   const connect = useCallback(async () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -54,9 +60,12 @@ export default function VoiceChat({
     setError(null);
 
     try {
-      // Get backend URL from environment or default
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      const wsUrl = backendUrl.replace('http', 'ws') + `/api/realtime/voice/${sessionId}`;
+      // Get backend URL from environment or default (8001 — same default as
+      // apiClient/predictorClient)
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+      const wsBase = backendUrl.replace(/^http/, 'ws');
+      const contextParam = analysisId ? `?analysis_id=${encodeURIComponent(analysisId)}` : '';
+      const wsUrl = `${wsBase}/api/realtime/voice/${sessionId}${contextParam}`;
 
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
