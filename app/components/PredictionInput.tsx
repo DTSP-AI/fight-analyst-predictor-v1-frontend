@@ -725,7 +725,7 @@ export default function PredictionInput({ onSubmit, disabled = false }: Props) {
   const [fighterA, setFighterA] = useState<FighterCardState>(blankState());
   const [fighterB, setFighterB] = useState<FighterCardState>(blankState());
   const [sport, setSport] = useState<Sport>('mma');
-  const [model, setModel] = useState<AllowedModel>('claude-sonnet-4-6');
+  const [model, setModel] = useState<AllowedModel>('gpt-4o');
   const [error, setError] = useState<string | null>(null);
 
   const buildFighterInput = (s: FighterCardState): FighterInput => ({

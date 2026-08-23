@@ -262,10 +262,10 @@ export interface PredictionState {
 }
 
 export const ALLOWED_MODELS: ReadonlyArray<{ id: AllowedModel; label: string }> = [
-  { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6 (default)' },
-  { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
-  { id: 'gpt-4o', label: 'GPT-4o' },
+  { id: 'gpt-4o', label: 'GPT-4o (default)' },
   { id: 'gpt-4o-mini', label: 'GPT-4o mini' },
+  { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+  { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
 ];
 
 export const SPORTS: ReadonlyArray<{ id: Sport; label: string }> = [
